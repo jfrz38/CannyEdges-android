@@ -23,8 +23,8 @@ public class CannyEdgesParallel {
     private double[][] matriz_Jy;	//Mátriz convolucionada con máscara Y
     private double[][] matriz_J;
     private double[][] kernel_gauss;
-    int u_max = 250*50000; //Umbral máximo
-    int u_min = 200*50000; //Umbral mínimo
+    int u_max = 250*10000; //Umbral máximo
+    int u_min = 200*10000; //Umbral mínimo
     private double[][] mascara_filtro_x;	//Máscara genérica X
     private double[][] mascara_filtro_y;	//Máscara genérica Y
     public int blackPixel = (255<<24) | (0<<16) | (0<<8) | 0;

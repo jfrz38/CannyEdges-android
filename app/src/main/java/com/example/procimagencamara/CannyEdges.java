@@ -13,8 +13,8 @@ public class CannyEdges {
     private int height;
     private double[][] matriz_Jx;	//Matriz convolucionada con máscara X
     private double[][] matriz_Jy;	//Mátriz convolucionada con máscara Y
-    int u_max = 180*10000; //Umbral máximo
-    int u_min = 100*10000; //Umbral mínimo
+    int u_max = 200*10000; //Umbral máximo
+    int u_min = 250*10000; //Umbral mínimo
     private double[][] mascara_filtro_x;	//Máscara genérica X
     private double[][] mascara_filtro_y;	//Máscara genérica Y
     public int blackPixel = (255<<24) | (0<<16) | (0<<8) | 0;
