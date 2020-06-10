@@ -355,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
                     }else { // versión paralela.
                         if (!isCheck(CBNATIVE)) { // Java (paralelo).
                             t0 = System.nanoTime();
-                            procImage = new CannyEdgesParallel(lastwidth, lastheight,data,nThreads).getMatriz_umbral();
+                            procImage = new CannyEdgesParallelV2(lastwidth, lastheight,data,nThreads).getMatriz_umbral();
                             t1 = System.nanoTime();
                         }
                         else { // Nativo (paralelo).

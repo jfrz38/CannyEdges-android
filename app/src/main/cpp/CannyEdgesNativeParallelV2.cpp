@@ -24,7 +24,6 @@
 
 class CannyEdgesNativeParallelV2{
 
-    //Matriz de magnitud de los bordes
     double* matriz_es;	//Matriz de magnitud de los bordes
     int* matriz_direccion;	//Matriz de dirección de los bordes
     double* matriz_nomax;	//Matriz de no máximos
@@ -49,10 +48,9 @@ public:
         this->width = width;
         this->height = height;
         this->data = data;
-        //nThreads = 1;
         this->nThreads = nThreads;
-        this->u_max = 250*10000; //Umbral máximo
-        this->u_min = 200*10000; //Umbral mínimo
+        this->u_max = 400*10000; //Umbral máximo
+        this->u_min = 300*10000; //Umbral mínimo
         int size=width*height;
         this->size = size;
 
@@ -129,10 +127,8 @@ public:
         int myFinish, myInit;
         myInit = 2*width*myInitRow;
         myFinish = 2*width*nextThreadRow;
-        image_toGreyParallel(thread, myInit, myFinish);
-
-
-        int size = width*height;
+        image_toGreyParallel(myInit, myFinish);
+        //int size = width*height;
 
         int x;
         int i;
@@ -149,14 +145,15 @@ public:
 
         //Calcular la magnitud de los bordes
         for(x =myInit; x<myFinish;x++){
-            matriz_es[x] = sqrt((pow(matriz_Jx[x],2))+(pow(matriz_Jy[x],2)));
+            //matriz_es[x] = sqrt((pow(matriz_Jx[x],2))+(pow(matriz_Jy[x],2)));
+            matriz_es[x] = sqrt((matriz_Jx[x]*matriz_Jx[x])+(matriz_Jy[x]*matriz_Jy[x]));
         }
         for(x =myInit; x<myFinish;x++){
             matriz_direccion[x] = matriz_Jx[x]==0 ? 0 : direccion_cercanaParallel(atan(matriz_Jy[x] / matriz_Jx[x]));
         }
 
         //Crear matriz de no máximos
-        for(x =myInit; x<myFinish;x++){
+        /*for(x =myInit; x<myFinish;x++){
             i = x/width;
             j = x-width*i;
             if (i <= 1 || i == height-1 || j <=1 || j == width-1) {
@@ -164,7 +161,8 @@ public:
                 continue;
             }
             crear_matriz_nomax_orientacionParallel(x);
-        }
+        }*/
+        crear_matriz_nomax_orientacionParallel(myInit,myFinish);
 
         //Generar bordes según orientación
         for(x =myInit; x<myFinish;x++){
@@ -252,47 +250,59 @@ public:
         return -1;	//No llega aquí
     }
 
-    void crear_matriz_nomax_orientacionParallel(int x) {
+    void crear_matriz_nomax_orientacionParallel(int myInit, int myFinish) {
 
-        int direccion = matriz_direccion[x];
-        switch (direccion) {
-            case 0:	//Comprobar con los píxeles de la izquierda y la derecha
-
-                if (matriz_es[x] < matriz_es[x-1] || matriz_es[x] < matriz_es[x + 1]) {
-                    matriz_nomax[x] = 0;
-                }
-                else {
-                    matriz_nomax[x] = matriz_es[x];
-                }
-                break;
-            case 45://Comprobar con los píxeles de la izquierda abajo y la derecha arriba
-                if (matriz_es[x] < matriz_es[x+width-1] || matriz_es[x] < matriz_es[x-width+1]) {
-                    matriz_nomax[x] = 0;
-                }
-                else {
-                    matriz_nomax[x] = matriz_es[x];
-                }
-                break;
-            case 90://Comprobar con los píxeles de arriba y abajo
-                if (matriz_es[x] < matriz_es[x - width] || matriz_es[x] < matriz_es[x + width]) {
-                    matriz_nomax[x] = 0;
-                }
-                else {
-                    matriz_nomax[x] = matriz_es[x];
-                }
-                break;
-            case 135://Comprobar con los píxeles de la izquierda arriba y la derecha abajo
-                if (matriz_es[x] < matriz_es[x - width - 1] || matriz_es[x] < matriz_es[x + width + 1]) {
-                    matriz_nomax[x] = 0;
-                }
-                else {
-                    matriz_nomax[x]= matriz_es[x];
-                }
-                break;
-            default:
+        int x, i, j;
+        for(x =myInit; x<myFinish;x++){
+            i = x/width;
+            j = x-width*i;
+            //if (i == 0 || i == height|| j == width|| j == 0) {matriz_nomax[x] = 0;continue;};
+            if (i <= 1 || i == height-1 || j <=1 || j == width-1) {
                 matriz_nomax[x] = 0;
-                break;
+                continue;
+            }
+            //crear_matriz_nomax_orientacion(x);
+            int direccion = matriz_direccion[x];
+            switch (direccion) {
+                case 0:	//Comprobar con los píxeles de la izquierda y la derecha
+
+                    if (matriz_es[x] < matriz_es[x-1] || matriz_es[x] < matriz_es[x + 1]) {
+                        matriz_nomax[x] = 0;
+                    }
+                    else {
+                        matriz_nomax[x] = matriz_es[x];
+                    }
+                    break;
+                case 45://Comprobar con los píxeles de la izquierda abajo y la derecha arriba
+                    if (matriz_es[x] < matriz_es[x+width-1] || matriz_es[x] < matriz_es[x-width+1]) {
+                        matriz_nomax[x] = 0;
+                    }
+                    else {
+                        matriz_nomax[x] = matriz_es[x];
+                    }
+                    break;
+                case 90://Comprobar con los píxeles de arriba y abajo
+                    if (matriz_es[x] < matriz_es[x - width] || matriz_es[x] < matriz_es[x + width]) {
+                        matriz_nomax[x] = 0;
+                    }
+                    else {
+                        matriz_nomax[x] = matriz_es[x];
+                    }
+                    break;
+                case 135://Comprobar con los píxeles de la izquierda arriba y la derecha abajo
+                    if (matriz_es[x] < matriz_es[x - width - 1] || matriz_es[x] < matriz_es[x + width + 1]) {
+                        matriz_nomax[x] = 0;
+                    }
+                    else {
+                        matriz_nomax[x]= matriz_es[x];
+                    }
+                    break;
+                default:
+                    matriz_nomax[x] = 0;
+                    break;
+            }
         }
+
     }
 
     void seguir_cadena_orientacionParallel(int x) {
@@ -303,7 +313,7 @@ public:
         //a la normal del borde mientras sea > u_min
 
         //Valores de los dos vecinos
-        int aux_x1, aux_y1, aux_x2, aux_y2;
+        //int aux_x1, aux_y1, aux_x2, aux_y2;
 
         int newPosition1;
         int newPosition2;
@@ -337,7 +347,7 @@ public:
             if (matriz_visitados[newPosition1] == 1) return;	//Píxel ya estudiado
             int i = newPosition1/width;
             int j = newPosition1-width*i;
-            if (i + aux_x1 == 0 || i + aux_x1 == height|| j + aux_y1 == width|| j + aux_y1 == 0) return;
+            //if (i == 0 || i  == height|| j  == width|| j  == 0) return;
             seguir_cadena_orientacionParallel(newPosition1);
         }
 
@@ -345,7 +355,7 @@ public:
             if (matriz_visitados[newPosition2] == 1) return;	//Píxel ya estudiado
             int i = newPosition2/width;
             int j = newPosition2-width*i;
-            if (i + aux_x2 == 0 || i + aux_x2 == height|| j + aux_y2 == width|| j + aux_y2 == 0) return;
+            //if (i == 0 || i  == height|| j  == width|| j  == 0) return;
             seguir_cadena_orientacionParallel(newPosition2);
         }
     }
@@ -372,15 +382,9 @@ public:
         //Derecha abajo
         if (matriz_nomax[x+width+1] >= u_min) matriz_umbral[x] = whitePixel;
 
-        /*for (int k = -1; k <= 1; k++) {
-            for (int l = -1; l <= 1; l++) {
-                if (k == 0 && l == 0) continue;
-                if (matriz_nomax[i + k][j + l] >= u_min) matriz_umbral[x] = whitePixel;
-            }
-        }*/
     }
 
-    void image_toGreyParallel(int my_id, int myOff, int myEnd) {
+    void image_toGreyParallel(int myOff, int myEnd) {
         int y1;
         int i;
         for(i=myOff; i < myEnd;i++) {

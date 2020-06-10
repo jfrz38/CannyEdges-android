@@ -70,7 +70,6 @@ public class CannyEdgesParallel {
         mascara_filtro_y[3-1][1-1] = 1;			mascara_filtro_y[3-1][2-1] = k;		mascara_filtro_y[3-1][3-1] = 1;
 
         List<Callable<Void>> todoTasks = new ArrayList<>(nThreads);
-        //ExecutorService es = Executors.newFixedThreadPool(nThreads);
         for (int i=0; i < nThreads; i++) {
             todoTasks.add(i, new myJavaWorker(i));
         }
@@ -372,13 +371,9 @@ public class CannyEdgesParallel {
     }
 
     private final class myJavaWorker implements Callable<Void> {
-
-        //private int [] pixels;
         private int id;
 
         public myJavaWorker(int _id) {
-
-            //pixels = _pixels;
             id = _id;
         }
 
@@ -387,7 +382,5 @@ public class CannyEdgesParallel {
             return null;
         }
     }
-
-
 
 }
