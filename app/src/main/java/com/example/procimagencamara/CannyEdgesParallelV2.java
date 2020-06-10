@@ -71,7 +71,6 @@ public class CannyEdgesParallelV2 {
         mascara_filtro_y[3 - 1][2 - 1] = k;
         mascara_filtro_y[3 - 1][3 - 1] = 1;
 
-        //algoritmo(0);
         List<Callable<Void>> todoTasks = new ArrayList<>(nThreads);
         for (int i=0; i < nThreads; i++) {
             todoTasks.add(i, new CannyEdgesParallelV2.myJavaWorker(i));
@@ -85,15 +84,8 @@ public class CannyEdgesParallelV2 {
 
     public void algoritmo(int thread){
 
-        //int myInit = 0;
-        //int myFinish = size;
         int myInit = size/nThreads*thread;
         int myFinish = size/nThreads*(thread+1);
-        /*int myInitRow = (int)(((float)thread/(float)nThreads)*((float)height/2.0f));
-        int nextThreadRow = (int)(((float)(thread+1)/(float)nThreads)*((float)height/2.0f));
-        int myFinish, myInit;
-        myInit = 2*width*myInitRow;
-        myFinish = 2*width*nextThreadRow;*/
         int x,i,j;
         image_toGrey(myInit,myFinish);
 
@@ -108,22 +100,13 @@ public class CannyEdgesParallelV2 {
 
         //Calcular la magnitud de los bordes
         for(x =myInit; x<myFinish;x++){
-            //matriz_es[x] = sqrt((pow(matriz_Jx[x],2))+(pow(matriz_Jy[x],2)));
             matriz_es[x] = Math.sqrt((matriz_Jx[x]*matriz_Jx[x])+(matriz_Jy[x]*matriz_Jy[x]));
         }
         for(x =myInit; x<myFinish;x++){
             matriz_direccion[x] = matriz_Jx[x]==0 ? 0 : direccion_cercana(Math.atan(matriz_Jy[x] / matriz_Jx[x]));
         }
         //Crear matriz de no máximos
-        for(x =myInit; x<myFinish;x++){
-            i = x/width;
-            j = x-width*i;
-            if (i <= 1 || i == height-1 || j <=1 || j == width-1) {
-                matriz_nomax[x] = 0;
-                continue;
-            }
-            crear_matriz_nomax_orientacion(x);
-        }
+        crear_matriz_nomax_orientacion(myInit, myFinish);
 
         //Generar bordes según orientación
         for(x =myInit; x<myFinish;x++){
@@ -139,35 +122,38 @@ public class CannyEdgesParallelV2 {
         }
 
         //Juntar contornos
+        juntar_contornos(myInit,myFinish);
+    }
+
+    private void juntar_contornos(int myInit,int myFinish) {
+
+        int i,j,x;
         for(x =myInit; x<myFinish;x++){
             i = x/width;
             j = x-width*i;
             if (i == 0 || i == width || j == 0 || j ==height) continue;
-            if (matriz_nomax[x] >= u_max)juntar_contornos(x);
+            if (matriz_nomax[x] >= u_max){
+                //Recorrer imagen original con una máscara 3x3 y comprobar si hay algún borde fuerte
+                //Comprobar vecinos
+                //Izquierda arriba
+                if (matriz_nomax[x-width-1] >= u_min) matriz_umbral[x] = whitePixel; if(x==size-1)System.out.println("1: Último punto blanco");
+                //Arriba
+                if (matriz_nomax[x-width] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
+                //Derecha arriba
+                if (matriz_nomax[x-width+1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
+                //Izquierda
+                if (matriz_nomax[x-1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
+                //Derecha
+                if (matriz_nomax[x+1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
+                //Izquierda abajo
+                if (matriz_nomax[x+width-1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
+                //Abajo
+                if (matriz_nomax[x+width] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
+                //Derecha abajo
+                if (matriz_nomax[x+width+1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
+            }
         }
-    }
 
-    private void juntar_contornos(int x) {
-
-        //Recorrer imagen original con una máscara 3x3 y comprobar si hay algún borde fuerte
-        //Comprobar vecinos
-        if(x==size-1)System.out.println("1: Entra size -1");
-        //Izquierda arriba
-        if (matriz_nomax[x-width-1] >= u_min) matriz_umbral[x] = whitePixel; if(x==size-1)System.out.println("1: Último punto blanco");
-        //Arriba
-        if (matriz_nomax[x-width] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
-        //Derecha arriba
-        if (matriz_nomax[x-width+1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
-        //Izquierda
-        if (matriz_nomax[x-1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
-        //Derecha
-        if (matriz_nomax[x+1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
-        //Izquierda abajo
-        if (matriz_nomax[x+width-1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
-        //Abajo
-        if (matriz_nomax[x+width] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
-        //Derecha abajo
-        if (matriz_nomax[x+width+1] >= u_min) matriz_umbral[x] = whitePixel;if(x==size-1)System.out.println("1: Último punto blanco");
     }
 
     private void seguir_cadena_orientacion(int x) {
@@ -220,47 +206,58 @@ public class CannyEdgesParallelV2 {
         }
     }
 
-    private void crear_matriz_nomax_orientacion(int x) {
+    private void crear_matriz_nomax_orientacion(int myInit, int myFinish) {
 
-        int direccion = matriz_direccion[x];
-        switch (direccion) {
-            case 0:	//Comprobar con los píxeles de la izquierda y la derecha
-
-                if (matriz_es[x] < matriz_es[x-1] || matriz_es[x] < matriz_es[x + 1]) {
-                    matriz_nomax[x] = 0;
-                }
-                else {
-                    matriz_nomax[x] = matriz_es[x];
-                }
-                break;
-            case 45://Comprobar con los píxeles de la izquierda abajo y la derecha arriba
-                if (matriz_es[x] < matriz_es[x+width-1] || matriz_es[x] < matriz_es[x-width+1]) {
-                    matriz_nomax[x] = 0;
-                }
-                else {
-                    matriz_nomax[x] = matriz_es[x];
-                }
-                break;
-            case 90://Comprobar con los píxeles de arriba y abajo
-                if (matriz_es[x] < matriz_es[x - width] || matriz_es[x] < matriz_es[x + width]) {
-                    matriz_nomax[x] = 0;
-                }
-                else {
-                    matriz_nomax[x] = matriz_es[x];
-                }
-                break;
-            case 135://Comprobar con los píxeles de la izquierda arriba y la derecha abajo
-                if (matriz_es[x] < matriz_es[x - width - 1] || matriz_es[x] < matriz_es[x + width + 1]) {
-                    matriz_nomax[x] = 0;
-                }
-                else {
-                    matriz_nomax[x]= matriz_es[x];
-                }
-                break;
-            default:
+        int x,i,j;
+        for(x =myInit; x<myFinish;x++){
+            i = x/width;
+            j = x-width*i;
+            if (i <= 1 || i == height-1 || j <=1 || j == width-1) {
                 matriz_nomax[x] = 0;
-                break;
+                continue;
+            }
+            int direccion = matriz_direccion[x];
+            switch (direccion) {
+                case 0:	//Comprobar con los píxeles de la izquierda y la derecha
+
+                    if (matriz_es[x] < matriz_es[x-1] || matriz_es[x] < matriz_es[x + 1]) {
+                        matriz_nomax[x] = 0;
+                    }
+                    else {
+                        matriz_nomax[x] = matriz_es[x];
+                    }
+                    break;
+                case 45://Comprobar con los píxeles de la izquierda abajo y la derecha arriba
+                    if (matriz_es[x] < matriz_es[x+width-1] || matriz_es[x] < matriz_es[x-width+1]) {
+                        matriz_nomax[x] = 0;
+                    }
+                    else {
+                        matriz_nomax[x] = matriz_es[x];
+                    }
+                    break;
+                case 90://Comprobar con los píxeles de arriba y abajo
+                    if (matriz_es[x] < matriz_es[x - width] || matriz_es[x] < matriz_es[x + width]) {
+                        matriz_nomax[x] = 0;
+                    }
+                    else {
+                        matriz_nomax[x] = matriz_es[x];
+                    }
+                    break;
+                case 135://Comprobar con los píxeles de la izquierda arriba y la derecha abajo
+                    if (matriz_es[x] < matriz_es[x - width - 1] || matriz_es[x] < matriz_es[x + width + 1]) {
+                        matriz_nomax[x] = 0;
+                    }
+                    else {
+                        matriz_nomax[x]= matriz_es[x];
+                    }
+                    break;
+                default:
+                    matriz_nomax[x] = 0;
+                    break;
+            }
         }
+
+
 
     }
 
@@ -276,23 +273,19 @@ public class CannyEdgesParallelV2 {
     }
 
     private void convolucionY(int[][] m2, int myInit, int myFinish) {
-        int center = 3 / 2;	//Número de píxeles de margen
         double sumatoria_convolucion;
-        int fila;
-        int columna;
-        int x, i, j;
+        int minimumPosition = width+2;
+        int maximumPosition = size-width-2;
+        int x;
         for(x =myInit; x<myFinish;x++){
-            sumatoria_convolucion = 0.0;
-            i = x/width;
-            j = x-width*i;
-            //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
 
-            if((x-width-1)<0 || (x+width+1)>=size){
+            //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
+            if(x<minimumPosition || x>maximumPosition){
                 sumatoria_convolucion = matriz_image[x];
             }
             //En caso contrario se realiza la convolución
             else {
-                sumatoria_convolucion += (matriz_image[x-width-1]*m2[0][0]);
+                sumatoria_convolucion = (matriz_image[x-width-1]*m2[0][0]);
                 sumatoria_convolucion += (matriz_image[x-width]*m2[1][0]);
                 sumatoria_convolucion += (matriz_image[x-width+1]*m2[2][0]);
                 sumatoria_convolucion += (matriz_image[x-1]*m2[0][1]);
@@ -307,22 +300,20 @@ public class CannyEdgesParallelV2 {
     }
 
     private void convolucionX(int[][] m2, int myInit, int myFinish) {
-        int center = 3 / 2;	//Número de píxeles de margen
+
         double sumatoria_convolucion;
-        int fila;
-        int columna;
-        int x, i, j;
+        int minimumPosition = width+2;
+        int maximumPosition = size-width-2;
+        int x;
         for(x =myInit; x<myFinish;x++){
-            sumatoria_convolucion = 0.0;
-            i = x/width;
-            j = x-width*i;
+
             //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
-            if((x-width-1)<0 || (x+width+1)>=size){
+            if(x<minimumPosition || x>maximumPosition){
                 sumatoria_convolucion = matriz_image[x];
             }
             //En caso contrario se realiza la convolución
             else {
-                sumatoria_convolucion += (matriz_image[x-width-1]*m2[0][0]);
+                sumatoria_convolucion = (matriz_image[x-width-1]*m2[0][0]);
                 sumatoria_convolucion += (matriz_image[x-width]*m2[1][0]);
                 sumatoria_convolucion += (matriz_image[x-width+1]*m2[2][0]);
                 sumatoria_convolucion += (matriz_image[x-1]*m2[0][1]);

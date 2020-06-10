@@ -153,15 +153,6 @@ public:
         }
 
         //Crear matriz de no máximos
-        /*for(x =myInit; x<myFinish;x++){
-            i = x/width;
-            j = x-width*i;
-            if (i <= 1 || i == height-1 || j <=1 || j == width-1) {
-                matriz_nomax[x] = 0;
-                continue;
-            }
-            crear_matriz_nomax_orientacionParallel(x);
-        }*/
         crear_matriz_nomax_orientacionParallel(myInit,myFinish);
 
         //Generar bordes según orientación
@@ -179,19 +170,45 @@ public:
         }
 
         //Juntar contornos
-        for(x =myInit; x<myFinish;x++){
+        /*for(x =myInit; x<myFinish;x++){
             i = x/width;
             j = x-width*i;
             if (i == 0 || i == width || j == 0 || j ==height) continue;
             if (matriz_nomax[x] >= u_max)juntar_contornosParallel(x);
-        }
+        }*/
+
+        juntar_contornosParallel(myInit,myFinish);
 
         pthread_exit(NULL);
     }
 
     void convolucionParallelX(int** m2,int myInit, int myFinish){
 
-        int center = 3 / 2;	//Número de píxeles de margen
+        double sumatoria_convolucion;
+        int minimumPosition = width+2;
+        int maximumPosition = size-width-2;
+        int x;
+        for(x =myInit; x<myFinish;x++){
+
+            //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
+            if(x<minimumPosition || x>maximumPosition){
+                sumatoria_convolucion = matriz_image[x];
+            }
+                //En caso contrario se realiza la convolución
+            else {
+                sumatoria_convolucion = (matriz_image[x-width-1]*m2[0][0]);
+                sumatoria_convolucion += (matriz_image[x-width]*m2[1][0]);
+                sumatoria_convolucion += (matriz_image[x-width+1]*m2[2][0]);
+                sumatoria_convolucion += (matriz_image[x-1]*m2[0][1]);
+                sumatoria_convolucion += (matriz_image[x+1]*m2[2][1]);
+                sumatoria_convolucion += (matriz_image[x+width-1]*m2[0][2]);
+                sumatoria_convolucion += (matriz_image[x+width]*m2[1][2]);
+                sumatoria_convolucion += (matriz_image[x+width+1]*m2[2][2]);
+            }
+            //Se añade el valor calculado al punto correspondiente
+            matriz_Jx[x] = sumatoria_convolucion;
+        }
+        /*int center = 3 / 2;	//Número de píxeles de margen
         double sumatoria_convolucion;
         int fila;
         int columna;
@@ -211,11 +228,35 @@ public:
                     }
                 }
             matriz_Jx[i*width+j] = sumatoria_convolucion;
-        }
+        }*/
     }
 
     void convolucionParallelY(int** m2,int myInit, int myFinish){
-        int center = 3 / 2;	//Número de píxeles de margen
+        double sumatoria_convolucion;
+        int minimumPosition = width+2;
+        int maximumPosition = size-width-2;
+        int x;
+        for(x =myInit; x<myFinish;x++){
+
+            //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
+            if(x<minimumPosition || x>maximumPosition){
+                sumatoria_convolucion = matriz_image[x];
+            }
+                //En caso contrario se realiza la convolución
+            else {
+                sumatoria_convolucion = (matriz_image[x-width-1]*m2[0][0]);
+                sumatoria_convolucion += (matriz_image[x-width]*m2[1][0]);
+                sumatoria_convolucion += (matriz_image[x-width+1]*m2[2][0]);
+                sumatoria_convolucion += (matriz_image[x-1]*m2[0][1]);
+                sumatoria_convolucion += (matriz_image[x+1]*m2[2][1]);
+                sumatoria_convolucion += (matriz_image[x+width-1]*m2[0][2]);
+                sumatoria_convolucion += (matriz_image[x+width]*m2[1][2]);
+                sumatoria_convolucion += (matriz_image[x+width+1]*m2[2][2]);
+            }
+            //Se añade el valor calculado al punto correspondiente
+            matriz_Jy[x] = sumatoria_convolucion;
+        }
+        /*int center = 3 / 2;	//Número de píxeles de margen
         double sumatoria_convolucion;
         int fila;
         int columna;
@@ -235,7 +276,7 @@ public:
                     }
                 }
             matriz_Jy[i*width+j] = sumatoria_convolucion;
-        }
+        }*/
     }
 
     int direccion_cercanaParallel(double f) {
@@ -360,27 +401,36 @@ public:
         }
     }
 
-    void juntar_contornosParallel(int x) {
+    void juntar_contornosParallel(int myInit, int myFinish) {
 
-        //Recorrer imagen original con una máscara 3x3 y comprobar si hay algún borde fuerte
-        //Comprobar vecinos
+        int x,i,j;
+        for(x =myInit; x<myFinish;x++){
+            i = x/width;
+            j = x-width*i;
+            if (i == 0 || i == width || j == 0 || j ==height) continue;
+            if (matriz_nomax[x] >= u_max){
+                //Recorrer imagen original con una máscara 3x3 y comprobar si hay algún borde fuerte
+                //Comprobar vecinos
 
-        //Izquierda arriba
-        if (matriz_nomax[x-width-1] >= u_min) matriz_umbral[x] = whitePixel;
-        //Arriba
-        if (matriz_nomax[x-width] >= u_min) matriz_umbral[x] = whitePixel;
-        //Derecha arriba
-        if (matriz_nomax[x-width+1] >= u_min) matriz_umbral[x] = whitePixel;
-        //Izquierda
-        if (matriz_nomax[x-1] >= u_min) matriz_umbral[x] = whitePixel;
-        //Derecha
-        if (matriz_nomax[x+1] >= u_min) matriz_umbral[x] = whitePixel;
-        //Izquierda abajo
-        if (matriz_nomax[x+width-1] >= u_min) matriz_umbral[x] = whitePixel;
-        //Abajo
-        if (matriz_nomax[x+width] >= u_min) matriz_umbral[x] = whitePixel;
-        //Derecha abajo
-        if (matriz_nomax[x+width+1] >= u_min) matriz_umbral[x] = whitePixel;
+                //Izquierda arriba
+                if (matriz_nomax[x-width-1] >= u_min) matriz_umbral[x] = whitePixel;
+                //Arriba
+                if (matriz_nomax[x-width] >= u_min) matriz_umbral[x] = whitePixel;
+                //Derecha arriba
+                if (matriz_nomax[x-width+1] >= u_min) matriz_umbral[x] = whitePixel;
+                //Izquierda
+                if (matriz_nomax[x-1] >= u_min) matriz_umbral[x] = whitePixel;
+                //Derecha
+                if (matriz_nomax[x+1] >= u_min) matriz_umbral[x] = whitePixel;
+                //Izquierda abajo
+                if (matriz_nomax[x+width-1] >= u_min) matriz_umbral[x] = whitePixel;
+                //Abajo
+                if (matriz_nomax[x+width] >= u_min) matriz_umbral[x] = whitePixel;
+                //Derecha abajo
+                if (matriz_nomax[x+width+1] >= u_min) matriz_umbral[x] = whitePixel;
+            }
+        }
+
 
     }
 
