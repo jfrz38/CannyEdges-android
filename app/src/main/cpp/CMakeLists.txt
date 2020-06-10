@@ -17,7 +17,7 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-        processimg.cpp processimg_neon.cpp CannyEdgesNative.cpp)
+        processimg.cpp processimg_neon.cpp CannyEdgesNative.cpp CannyEdgesNativeParallel.cpp CannyEdgesNativeParallelV2.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

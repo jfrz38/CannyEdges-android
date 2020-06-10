@@ -14,6 +14,7 @@ using namespace std;
 #include "CannyEdgesNative.cpp"
 #include "CannyEdgesNativeParallel.cpp"
 #include "CannyEdgesNativeParallelOMP.cpp"
+#include "CannyEdgesNativeParallelV2.cpp"
 
 #define MAX_NUM_THREADS 16
 typedef struct paramST { // estructura de datos para asignar trabajo a cada hebra.
@@ -500,11 +501,18 @@ Java_com_example_procimagencamara_MainActivity_YuvToCannyNativeParallel(JNIEnv *
                                                                         jbyteArray data, jint width,
                                                                         jint height, jint nthr) {
     jintArray result = env->NewIntArray(width*height);
+    //jintArray intJavaArray = env->NewIntArray(width*height);
+    //int *intCArray;
+    //*env->SetIntArrayRegion(intJavaArray, 0, width*height, intCArray);
     unsigned char *cData = (unsigned char *) env->GetByteArrayElements(data,NULL);
-    CannyEdgesNativeParallel c;
+    CannyEdgesNativeParallelV2 c;
+    __android_log_print(ANDROID_LOG_INFO, "CANNY", "Entra lanzar hilos");
     c.lanzar_hilos(width, height, cData,nthr);
-    vector<int> returnArray = c.getMatriz_umbralParallel();
-    env->SetIntArrayRegion(result, 0, width*height, returnArray.data());
+    __android_log_print(ANDROID_LOG_INFO, "CANNY", "Termina lanzar hilos");
+    int* returnArray = c.getMatriz_umbralParallel();
+    __android_log_print(ANDROID_LOG_INFO, "CANNY", "Coge array imagen");
+    env->SetIntArrayRegion(result, 0, width*height, returnArray);
+    c.free_matrix();
     return (jintArray) result;
 }extern "C"
 JNIEXPORT jintArray JNICALL

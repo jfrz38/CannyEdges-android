@@ -85,6 +85,7 @@ public:
         mascara_filtro_x.resize(3, vector<double>(3));
         mascara_filtro_y.resize(3, vector<double>(3));
 
+        int *array = new int[width];
 
         int k = 2;
         //GradienteX
@@ -114,10 +115,6 @@ public:
         std::vector<std::thread> workers;
         for (int i = 0; i < nThreads; ++i) {
             workers.push_back(std::thread([this](int i){ algoritmo(i);},i));
-            //std::thread thr([&] {algoritmo(i);});
-            //some_threads.push_back(thr);
-            //std::thread th(&CannyEdgesNativeParallel::algoritmo,i);
-            //some_threads.push_back(std::move(th));
         }
         std::for_each(workers.begin(), workers.end(), [](std::thread &t)
         {
