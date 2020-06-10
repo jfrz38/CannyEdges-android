@@ -549,9 +549,8 @@ public class MainActivity extends AppCompatActivity {
                     optionCB[CBOMP].setEnabled(false);
                     optionCB[CBOMP].setChecked(false);
                 }
-                //TODO
-                //if (isNEONSupported()) { // ¿soporta instrucciones NEON?
-                if(false){
+                if (isNEONSupported()) { // ¿soporta instrucciones NEON?
+                //if(true){
                     if (optionCB[CBNATIVE].isChecked()) {
                         optionCB[CBNEON].setEnabled(true);
                     } else {

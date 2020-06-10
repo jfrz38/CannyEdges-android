@@ -15,6 +15,7 @@ using namespace std;
 #include "CannyEdgesNativeParallel.cpp"
 #include "CannyEdgesNativeParallelOMP.cpp"
 #include "CannyEdgesNativeParallelV2.cpp"
+#include "CannyEdgesNativeParallelOMPV2.cpp"
 
 #define MAX_NUM_THREADS 16
 typedef struct paramST { // estructura de datos para asignar trabajo a cada hebra.
@@ -501,16 +502,10 @@ Java_com_example_procimagencamara_MainActivity_YuvToCannyNativeParallel(JNIEnv *
                                                                         jbyteArray data, jint width,
                                                                         jint height, jint nthr) {
     jintArray result = env->NewIntArray(width*height);
-    //jintArray intJavaArray = env->NewIntArray(width*height);
-    //int *intCArray;
-    //*env->SetIntArrayRegion(intJavaArray, 0, width*height, intCArray);
     unsigned char *cData = (unsigned char *) env->GetByteArrayElements(data,NULL);
     CannyEdgesNativeParallelV2 c;
-    __android_log_print(ANDROID_LOG_INFO, "CANNY", "Entra lanzar hilos");
     c.lanzar_hilos(width, height, cData,nthr);
-    __android_log_print(ANDROID_LOG_INFO, "CANNY", "Termina lanzar hilos");
     int* returnArray = c.getMatriz_umbralParallel();
-    __android_log_print(ANDROID_LOG_INFO, "CANNY", "Coge array imagen");
     env->SetIntArrayRegion(result, 0, width*height, returnArray);
     c.free_matrix();
     return (jintArray) result;
@@ -521,11 +516,12 @@ Java_com_example_procimagencamara_MainActivity_YuvToCannyNativeParallelOMP(JNIEn
                                                                            jbyteArray data,
                                                                            jint width, jint height,
                                                                            jint nthreads) {
-    __android_log_print(ANDROID_LOG_INFO, "CANNY" ,  "Entra nativo canny paralelo");
     jintArray result = env->NewIntArray(width*height);
     unsigned char *cData = (unsigned char *) env->GetByteArrayElements(data,NULL);
-    CannyEdgesNativeOMP *cannyEdgesNative = new CannyEdgesNativeOMP(width, height, cData);
-    vector<int> returnArray = cannyEdgesNative->getMatriz_umbralOneVector();
-    env->SetIntArrayRegion(result, 0, width*height, returnArray.data());
+    CannyEdgesNativeParallelOMPV2 c;
+    c.lanzar_hilos(width, height, cData);
+    int* returnArray = c.getMatriz_umbralParallel();
+    env->SetIntArrayRegion(result, 0, width*height, returnArray);
+    c.free_matrix();
     return (jintArray) result;
 }
