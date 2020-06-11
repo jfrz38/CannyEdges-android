@@ -117,13 +117,13 @@ public:
         convolucionParallelY(mascara_filtro_y,0,size);
 
         //Calcular la magnitud de los bordes
-#pragma omp parallel for schedule(guided) private(x)
+#pragma omp parallel for schedule(guided)
         for(x =0; x<size;x++){
             //matriz_es[x] = sqrt((pow(matriz_Jx[x],2))+(pow(matriz_Jy[x],2)));
             matriz_es[x] = sqrt((matriz_Jx[x]*matriz_Jx[x])+(matriz_Jy[x]*matriz_Jy[x]));
         }
 
-#pragma omp parallel for schedule(guided) private(x)
+#pragma omp parallel for schedule(guided)
         for(x =0; x<size;x++){
             matriz_direccion[x] = matriz_Jx[x]==0 ? 0 : direccion_cercanaParallel(atan(matriz_Jy[x] / matriz_Jx[x]));
         }
@@ -147,13 +147,6 @@ public:
         }
 
         //Juntar contornos
-        /*for(x =myInit; x<myFinish;x++){
-            i = x/width;
-            j = x-width*i;
-            if (i == 0 || i == width || j == 0 || j ==height) continue;
-            if (matriz_nomax[x] >= u_max)juntar_contornosParallel(x);
-        }*/
-
         juntar_contornosParallel();
 
     }
@@ -192,7 +185,7 @@ public:
         int minimumPosition = width+2;
         int maximumPosition = size-width-2;
         int x;
-#pragma omp parallel for schedule(guided) private(sumatoria_convolucion,minimumPosition,maximumPosition)
+#pragma omp parallel for schedule(guided) private(sumatoria_convolucion)
         for(x =myInit; x<myFinish;x++){
 
             //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución

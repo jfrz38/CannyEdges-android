@@ -1,12 +1,5 @@
 package com.example.procimagencamara;
 
-import android.graphics.Color;
-import android.graphics.YuvImage;
-
-import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Collections;
-
 public class YUVto {
 
     private static int convertYUVtoRGB(int y, int u, int v) {
@@ -96,74 +89,6 @@ public class YUVto {
     public static int createPixel(int r, int g, int b, int a) {
         return (a<<24) | (r<<16) | (g<<8) | b;
     }
-
-    public static int[] convolutionX(byte [] data, byte[] matrix, int divisor, int width, int height, int mask){
-
-        int size = width*height;
-        int color;
-        int nextRow, previousRow, x;
-        int[] aux = new int[data.length];
-// recorre la imagen excepto los bordes
-        for(int i=1;i < height - 1 ;i++){
-            for(int j=1; j < width -1; j++){
-                x = i * width + j;
-                nextRow = x + width;
-                previousRow = x - width;
-                color = matrix[0] * ((int) data[previousRow-1]&0xff) +
-                        matrix[1] * ((int)data[previousRow]&0xff) +
-                        matrix[2] * ((int)data[previousRow+1]&0xff) +
-                        matrix[3] * ((int)data[x-mask]&0xff) +
-                        matrix[4] * ((int)data[x]&0xff) +
-                        matrix[5] * ((int)data[x+mask]&0xff) +
-                        matrix[6] * ((int)data[nextRow-1]&0xff) +
-                        matrix[7] * ((int)data[nextRow]&0xff) +
-                        matrix[8] * ((int)data[nextRow+1]&0xff);
-                color=(int)((float) color / (float) divisor);
-                color = color>255? 255 : color<0 ? 0 : color;
-// asigna el mismo color en RGB y valor alfa a 1
-                aux[x] = 0xff000000 | (color<<16) | (color<<8) | color;
-            }
-        }
-
-        return aux;//procImage;
-    }
-
-    public static int[] convolutionY(byte [] data, byte[] matrix, int divisor, int width, int height, int mask){
-
-        int size = width*height;
-        int color;
-        int nextRow, previousRow, x;
-        int[] aux = new int[data.length];
-// recorre la imagen excepto los bordes
-        for(int i=1;i < height - 1 ;i++){
-            for(int j=1; j < width -1; j++){
-                x = i * width + j;
-                nextRow = x + width;
-                previousRow = x - width;
-                color = matrix[0] * ((int) data[previousRow-1]&0xff) +
-                        matrix[1] * ((int)data[previousRow-mask]&0xff) +
-                        matrix[2] * ((int)data[previousRow-1]&0xff) +
-                        matrix[3] * ((int)data[x]&0xff) +
-                        matrix[4] * ((int)data[x]&0xff) +
-                        matrix[5] * ((int)data[x]&0xff) +
-                        matrix[6] * ((int)data[nextRow+1]&0xff) +
-                        matrix[7] * ((int)data[nextRow+mask]&0xff) +
-                        matrix[8] * ((int)data[nextRow+1]&0xff);
-                color=(int)((float) color / (float) divisor);
-                color = color>255? 255 : color<0 ? 0 : color;
-// asigna el mismo color en RGB y valor alfa a 1
-                aux[x] = 0xff000000 | (color<<16) | (color<<8) | color;
-            }
-        }
-
-        return aux;
-    }
-
-    /*public static void convertYUV420_NV21toMirror(byte [] data, int [] pixels, int width, int height) {
-
-
-
-    }*/
 
 
     public static int[] convertYUV420_NV21toMirror(byte[] input, int width, int height) {

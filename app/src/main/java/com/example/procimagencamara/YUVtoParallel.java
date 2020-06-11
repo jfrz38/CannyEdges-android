@@ -143,8 +143,8 @@ public class YUVtoParallel {
         }
     }
 
-    public static void convertYUV420_NV21toMirror(byte [] data, byte[] matrix, int divisor, int [] procImage, int width, int height, int my_id, int nThreads){
-        System.out.println("Entra YuvToParallel");
+    public static int[] convertYUV420_NV21toMirror(byte [] data, int width, int height, int nThreads){
+        return new MirrorParallel(width,height,data,nThreads).getImage();
     }
 
     public int[] convertYUV420_NV21to_parallelCanny(byte [] data, int width, int height){
@@ -289,11 +289,11 @@ public class YUVtoParallel {
                 case CONVOLUTION:
                     convertYUV420_NV21toConvolution(data, matrix, divisor, pixels, width, height, id, nth);
                     break;
-                case CANNY:
-                    convertYUV420_NV21toCanny(data, pixels, width, height, id, nth);
-                    break;
-                case MIRROR:
-                    convertYUV420_NV21toMirror(data, matrix, divisor, pixels, width, height, id, nth);
+                //case CANNY:
+                //    convertYUV420_NV21toCanny(data, pixels, width, height, id, nth);
+                //    break;
+                //case MIRROR:
+                //    convertYUV420_NV21toMirror(data, matrix, divisor, pixels, width, height, id, nth);
             }
             return null;
         }

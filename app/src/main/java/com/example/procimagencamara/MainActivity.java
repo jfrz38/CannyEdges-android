@@ -397,8 +397,7 @@ public class MainActivity extends AppCompatActivity {
                     }else { // versión paralela.
                         if (!isCheck(CBNATIVE)) { // Java (paralelo).
                             t0 = System.nanoTime();
-                            YUV2par.convertYUV420_NV21to_parallel(YUVtoParallel.MIRROR,data,
-                                    matrix,divisor,procImage,lastwidth,lastheight);
+                            procImage = YUV2par.convertYUV420_NV21toMirror(data,lastwidth,lastheight,nThreads);
                             t1 = System.nanoTime();
                         }
                         else { // Nativo (paralelo).
