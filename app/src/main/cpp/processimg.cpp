@@ -16,6 +16,7 @@ using namespace std;
 #include "CannyEdgesNativeParallelOMP.cpp"
 #include "CannyEdgesNativeParallelV2.cpp"
 #include "CannyEdgesNativeParallelOMPV2.cpp"
+#include "CannyEdgesNativeIterative.cpp"
 
 #define MAX_NUM_THREADS 16
 typedef struct paramST { // estructura de datos para asignar trabajo a cada hebra.
@@ -490,9 +491,9 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_example_procimagencamara_MainAct
 
     jintArray result = env->NewIntArray(width*height);
     unsigned char *cData = (unsigned char *) env->GetByteArrayElements(data,NULL);
-    CannyEdgesNative *cannyEdgesNative = new CannyEdgesNative(width, height, cData);
-    vector<int> returnArray = cannyEdgesNative->getMatriz_umbralOneVector();
-    env->SetIntArrayRegion(result, 0, width*height, returnArray.data());
+    CannyEdgesNativeIterative *cannyEdgesNative = new CannyEdgesNativeIterative(width, height, cData);
+    int* returnArray = cannyEdgesNative->getMatriz_umbralParallel();
+    env->SetIntArrayRegion(result, 0, width*height, returnArray);
     return (jintArray) result;
 }
 

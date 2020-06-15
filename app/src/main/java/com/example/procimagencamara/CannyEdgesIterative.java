@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
-public class CannyEdgesParallelV2 {
+public class CannyEdgesIterative {
 
     private double[] matriz_es;	//Matriz de magnitud de los bordes
     private int[] matriz_direccion;	//Matriz de dirección de los bordes
@@ -29,7 +29,7 @@ public class CannyEdgesParallelV2 {
     int minimumPosition;
     int maximumPosition;
 
-    public CannyEdgesParallelV2(int width, int height, byte[] data, int nThreads){
+    public CannyEdgesIterative(int width, int height, byte[] data){
         this.width = width;
         this.height = height;
         this.data = data;
@@ -74,69 +74,53 @@ public class CannyEdgesParallelV2 {
         mascara_filtro_y[3 - 1][2 - 1] = k;
         mascara_filtro_y[3 - 1][3 - 1] = 1;
 
-        List<Callable<Void>> todoTasks = new ArrayList<>(nThreads);
-        for (int i=0; i < nThreads; i++) {
-            todoTasks.add(i, new CannyEdgesParallelV2.myJavaWorker(i));
-        }
-        try {
-            Executors.newFixedThreadPool(nThreads).invokeAll(todoTasks);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        algoritmo();
     }
 
-    public void algoritmo(int thread){
+    public void algoritmo(){
 
-        int myInit = size/nThreads*thread;
-        int myFinish = size/nThreads*(thread+1);
-
-        int x,i,j;
-        image_toGrey(myInit,myFinish);
+        int x;
+        image_toGrey();
 
         //Inicializar matriz_umbral a negro
-        for(x =myInit; x<myFinish;x++){
+        for(x=0; x < size;x++) {
             matriz_umbral[x] = blackPixel;
         }
         //Convolución Jx
-        convolucionX(mascara_filtro_x,myInit,myFinish);
+        convolucionX(mascara_filtro_x);
         //Convolución Jy
-        convolucionY(mascara_filtro_y,myInit,myFinish);
+        convolucionY(mascara_filtro_y);
 
         //Calcular la magnitud de los bordes
-        for(x =myInit; x<myFinish;x++){
+        for(x=0; x < size;x++) {
             //matriz_es[x] = Math.sqrt((matriz_Jx[x]*matriz_Jx[x])+(matriz_Jy[x]*matriz_Jy[x]));
             matriz_es[x] = Math.abs(matriz_Jx[x])+Math.abs(matriz_Jy[x]);
         }
-        for(x =myInit; x<myFinish;x++){
+        for(x=0; x < size;x++) {
             matriz_direccion[x] = matriz_Jx[x]==0 ? 0 : direccion_cercana(Math.atan(matriz_Jy[x] / matriz_Jx[x]));
         }
         //Crear matriz de no máximos
-        crear_matriz_nomax_orientacion(myInit, myFinish);
+        crear_matriz_nomax_orientacion();
 
         //Generar bordes según orientación
-        for(x =myInit; x<myFinish;x++){
+        for(x=0; x < size;x++) {
             if (matriz_visitados[x] == 1)continue;
-            if(x>minimumPosition && x<maximumPosition){
+            if(x>minimumPosition || x<maximumPosition){
                 if (matriz_nomax[x] >= u_max) {
                     seguir_cadena_orientacion(x);
                 }
             }
-            /*if (i != 0 || i != height || j != width || j != 0) {
-                if (matriz_nomax[x] >= u_max) {
-                    if (matriz_visitados[x] == 1)continue;	//Píxel ya estudiado
-                    seguir_cadena_orientacion(x);
-                }
-            }*/
         }
 
         //Juntar contornos
-        juntar_contornos(myInit,myFinish);
+        juntar_contornos();
     }
 
-    private void juntar_contornos(int myInit,int myFinish) {
+    private void juntar_contornos() {
 
         int x;
-        for(x =myInit; x<myFinish;x++){
+        for(x=0; x < size;x++) {
+
             if (matriz_nomax[x] >= u_max){
                 //Recorrer imagen original con una máscara 3x3 y comprobar si hay algún borde fuerte
                 //Comprobar vecinos
@@ -213,10 +197,10 @@ public class CannyEdgesParallelV2 {
         }
     }
 
-    private void crear_matriz_nomax_orientacion(int myInit, int myFinish) {
+    private void crear_matriz_nomax_orientacion() {
 
         int x,i,j;
-        for(x =myInit; x<myFinish;x++){
+        for(x=0; x < size;x++) {
             //i = x/width;
             //j = x-width*i;
             //if (i <= 1 || i == height-1 || j <=1 || j == width-1) {
@@ -265,8 +249,6 @@ public class CannyEdgesParallelV2 {
             }
         }
 
-
-
     }
 
     private int direccion_cercana(double f) {
@@ -280,10 +262,10 @@ public class CannyEdgesParallelV2 {
         return -1;	//No llega aquí
     }
 
-    private void convolucionY(int[][] m2, int myInit, int myFinish) {
+    private void convolucionY(int[][] m2) {
         double sumatoria_convolucion;
         int x;
-        for(x =myInit; x<myFinish;x++){
+        for(x=0; x < size;x++) {
 
             //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
             if(x<minimumPosition || x>maximumPosition){
@@ -305,14 +287,13 @@ public class CannyEdgesParallelV2 {
         }
     }
 
-    private void convolucionX(int[][] m2, int myInit, int myFinish) {
+    private void convolucionX(int[][] m2) {
 
         double sumatoria_convolucion;
         int minimumPosition = width+2;
         int maximumPosition = size-width-2;
         int x;
-        for(x =myInit; x<myFinish;x++){
-
+        for(x=0; x < size;x++) {
             //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
             if(x<minimumPosition || x>maximumPosition){
                 sumatoria_convolucion = matriz_image[x];
@@ -333,10 +314,10 @@ public class CannyEdgesParallelV2 {
         }
     }
 
-    private void image_toGrey(int myOff, int myEnd) {
+    private void image_toGrey() {
         int y1;
         int i;
-        for(i=myOff; i < myEnd;i++) {
+        for(i=0; i < size;i++) {
             y1 = data[i]&0xff;
             matriz_image[i] = 0xff000000 | (y1<<16) | (y1<<8) | y1;
         }
@@ -344,19 +325,6 @@ public class CannyEdgesParallelV2 {
 
     public int[] getMatriz_umbral(){
         return matriz_umbral;
-    }
-
-    private final class myJavaWorker implements Callable<Void> {
-        private int id;
-
-        public myJavaWorker(int _id) {
-            id = _id;
-        }
-
-        public Void call(){
-            algoritmo(id);
-            return null;
-        }
     }
 
 }

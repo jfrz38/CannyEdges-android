@@ -11,18 +11,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <iostream>
-#include <ctime>
-
-#include <array>
-#include <vector>
-#include <thread>
-#include <chrono>
 
 #define blackPixel -16777216
 #define whitePixel -1
 
-class CannyEdgesNativeParallelV2{
+class CannyEdgesNativeIterative{
 
     double* matriz_es;	//Matriz de magnitud de los bordes
     int* matriz_direccion;	//Matriz de dirección de los bordes
@@ -45,8 +38,7 @@ class CannyEdgesNativeParallelV2{
     int maximumPosition;
 
 public:
-    //CannyEdgesNativeParallel(int width, int height, unsigned char* data, int nThreads){
-    void lanzar_hilos(int width, int height, unsigned char* data, int nThreads) {
+    CannyEdgesNativeIterative(int width, int height, unsigned char* data) {
         this->width = width;
         this->height = height;
         this->data = data;
@@ -97,7 +89,7 @@ public:
         mascara_filtro_y[3 - 1][2 - 1] = k;
         mascara_filtro_y[3 - 1][3 - 1] = 1;
 
-        std::vector<std::thread> some_threads(nThreads);
+        /*std::vector<std::thread> some_threads(nThreads);
         std::vector<std::thread> workers;
         for (int i = 0; i < nThreads; ++i) {
             workers.push_back(std::thread([this](int i){ algoritmo(i);},i));
@@ -105,7 +97,8 @@ public:
         std::for_each(workers.begin(), workers.end(), [](std::thread &t)
         {
             t.join();
-        });
+        });*/
+        algoritmo();
 
         delete[] matriz_es;
         delete[] matriz_direccion;
@@ -123,45 +116,37 @@ public:
         delete[] mascara_filtro_y;
     }
 
-    void algoritmo(int my_thread){
+    void algoritmo(){
 
-        int thread = my_thread;
-        int myInitRow = (int)(((float)my_thread/(float)nThreads)*((float)height/2.0f));
-        int nextThreadRow = (int)(((float)(my_thread+1)/(float)nThreads)*((float)height/2.0f));
-        int myFinish, myInit;
-        myInit = 2*width*myInitRow;
-        myFinish = 2*width*nextThreadRow;
-        image_toGreyParallel(myInit, myFinish);
+        image_toGrey();
         //int size = width*height;
 
         int x;
         int i;
         int j;
         //Inicializar matriz_umbral a negro
-        for(x =myInit; x<myFinish;x++){
+        for(x =0; x<size;x++){
             matriz_umbral[x] = blackPixel;
         }
 
         //Convolución Jx
-        convolucionParallelX(mascara_filtro_x,myInit,myFinish);
+        convolucionParallelX(mascara_filtro_x);
         //Convolución Jy
-        convolucionParallelY(mascara_filtro_y,myInit,myFinish);
+        convolucionParallelY(mascara_filtro_y);
 
         //Calcular la magnitud de los bordes
-        for(x =myInit; x<myFinish;x++){
-            //matriz_es[x] = sqrt((pow(matriz_Jx[x],2))+(pow(matriz_Jy[x],2)));
-            //matriz_es[x] = sqrt((matriz_Jx[x]*matriz_Jx[x])+(matriz_Jy[x]*matriz_Jy[x]));
+        for(x =0; x<size;x++){
             matriz_es[x] = abs(matriz_Jx[x])+abs(matriz_Jy[x]);
         }
-        for(x =myInit; x<myFinish;x++){
+        for(x =0; x<size;x++){
             matriz_direccion[x] = matriz_Jx[x]==0 ? 0 : direccion_cercanaParallel(atan(matriz_Jy[x] / matriz_Jx[x]));
         }
 
         //Crear matriz de no máximos
-        crear_matriz_nomax_orientacionParallel(myInit,myFinish);
+        crear_matriz_nomax_orientacionParallel();
 
         //Generar bordes según orientación
-        for(x =myInit; x<myFinish;x++){
+        for(x =0; x<size;x++){
             if (matriz_visitados[x] == 1)continue;
             if(x>minimumPosition && x<maximumPosition){
                 if (matriz_nomax[x] >= u_max) {
@@ -170,18 +155,17 @@ public:
             }
         }
 
-        juntar_contornosParallel(myInit,myFinish);
+        juntar_contornosParallel();
 
-        pthread_exit(NULL);
     }
 
-    void convolucionParallelX(int** m2,int myInit, int myFinish){
+    void convolucionParallelX(int** m2){
 
         double sumatoria_convolucion;
         int minimumPosition = width+2;
         int maximumPosition = size-width-2;
         int x;
-        for(x =myInit; x<myFinish;x++){
+        for(x =0; x<size;x++){
 
             //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
             if(x<minimumPosition || x>maximumPosition){
@@ -203,12 +187,12 @@ public:
         }
     }
 
-    void convolucionParallelY(int** m2,int myInit, int myFinish){
+    void convolucionParallelY(int** m2){
         double sumatoria_convolucion;
         int minimumPosition = width+2;
         int maximumPosition = size-width-2;
         int x;
-        for(x =myInit; x<myFinish;x++){
+        for(x =0; x<size;x++){
 
             //Si el punto se encuentra dentro del margen se deja el píxel con el valor actual y se continua la ejecución
             if(x<minimumPosition || x>maximumPosition){
@@ -242,10 +226,10 @@ public:
         return -1;	//No llega aquí
     }
 
-    void crear_matriz_nomax_orientacionParallel(int myInit, int myFinish) {
+    void crear_matriz_nomax_orientacionParallel() {
 
         int x, i, j;
-        for(x =myInit; x<myFinish;x++){
+        for(x =0; x<size;x++){
             i = x/width;
             j = x-width*i;
             //if (i == 0 || i == height|| j == width|| j == 0) {matriz_nomax[x] = 0;continue;};
@@ -352,10 +336,10 @@ public:
         }
     }
 
-    void juntar_contornosParallel(int myInit, int myFinish) {
+    void juntar_contornosParallel() {
 
         int x,i,j;
-        for(x =myInit; x<myFinish;x++){
+        for(x =0; x<size;x++){
             i = x/width;
             j = x-width*i;
             if (i == 0 || i == width || j == 0 || j ==height) continue;
@@ -385,10 +369,10 @@ public:
 
     }
 
-    void image_toGreyParallel(int myOff, int myEnd) {
+    void image_toGrey() {
         int y1;
         int i;
-        for(i=myOff; i < myEnd;i++) {
+        for(i =0; i<size;i++){
             y1 = data[i ]&0xff;
             matriz_image[i] = 0xff000000 | (y1<<16) | (y1<<8) | y1;
         }

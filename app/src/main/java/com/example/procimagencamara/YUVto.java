@@ -83,7 +83,7 @@ public class YUVto {
 
     public static int[] convertYUV420_NV21toCanny(byte[] data, int width, int height) {
 
-        return new CannyEdges(width,height, convertYUV420_NV21toGrey(data,width,height)).getMatriz_umbralOneVector();
+        return new CannyEdgesIterative(width,height, data).getMatriz_umbral();
     }
 
     public static int createPixel(int r, int g, int b, int a) {
@@ -94,24 +94,6 @@ public class YUVto {
     public static int[] convertYUV420_NV21toMirror(byte[] input, int width, int height) {
 
         return convertYUV420_NV21toRGB8888(rotateYUV420Degree180(input,width,height),width,height);
-        /*int x;
-        for(int i=1;i < height - 1 ;i++) {
-            for (int j = 1; j < width - 1; j++) {
-                x = i * width + j;
-                output[x] = input[x];
-            }
-        }*/
-        //int[]aux = convertYUV420_NV21toRGB8888(input,output,width,height);
-        /*output = metodo_prueba(input,output,width,height);
-        for(int p:output){
-            p = 0;
-        }*/
-        /*int j = input.length;
-        byte[] aux = new byte[input.length];
-        for (int i = 0; i < input.length; i++,j--) {
-            aux[j - 1] = input[i];
-        }
-        input = aux;*/
 
     }
 
@@ -144,11 +126,6 @@ public class YUVto {
                 mirror[cont++] = data[x];
             }
         }
-        /*int j = data.length;
-        for (int i = 0; i < data.length; i++,j--) {
-            mirror[j - 1] = data[i];
-            //j = j - 1;
-        }*/
         return mirror;
     }
 }
